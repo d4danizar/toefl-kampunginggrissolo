@@ -1,0 +1,130 @@
+// ============================================================
+// TOEFL CBT Prediction - Prisma Schema
+// Database: PostgreSQL (Supabase)
+// ============================================================
+
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+// ============================================================
+// Enums
+// ============================================================
+
+enum Role {
+  USER
+  ADMIN
+}
+
+enum Section {
+  LISTENING
+  STRUCTURE
+  READING
+}
+
+// ============================================================
+// Models
+// ============================================================
+
+model User {
+  id          String   @id @default(cuid())
+  name        String
+  email       String   @unique
+  password    String
+  phone       String?
+  institution String?
+  role        Role     @default(USER)
+  createdAt   DateTime @default(now())
+
+  // Relations
+  tokens       Token[]
+  testSessions TestSession[]
+
+  @@map("users")
+}
+
+model Batch {
+  id          String   @id @default(cuid())
+  name        String
+  description String?
+  isActive    Boolean  @default(true)
+  sharedToken String?  @unique
+  startDate       DateTime
+  endDate         DateTime
+  durationMinutes Int      @default(120)
+  createdAt       DateTime @default(now())
+
+  // Relations
+  tokens       Token[]
+  testSessions TestSession[]
+  questions    Question[]
+
+  @@map("batches")
+}
+
+model Token {
+  id     String  @id @default(cuid())
+  code   String  @unique
+  isUsed Boolean @default(false)
+
+  // Relations
+  batchId  String
+  batch    Batch   @relation(fields: [batchId], references: [id], onDelete: Cascade)
+  usedById String?
+  usedBy   User?   @relation(fields: [usedById], references: [id], onDelete: SetNull)
+
+  createdAt DateTime @default(now())
+
+  @@index([batchId])
+  @@index([usedById])
+  @@map("tokens")
+}
+
+model Question {
+  id            String  @id @default(cuid())
+  text          String
+  section       Section
+  passage       String? @db.Text
+  audioUrl      String?
+  optionA       String
+  optionB       String
+  optionC       String
+  optionD       String
+  correctAnswer String
+
+  // Relations
+  batchId String?
+  batch   Batch?  @relation(fields: [batchId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+
+  @@index([section])
+  @@index([batchId])
+  @@map("questions")
+}
+
+model TestSession {
+  id          String   @id @default(cuid())
+  startTime   DateTime @default(now())
+  endTime     DateTime?
+  score       Int?
+  answers     Json?
+  isCompleted Boolean  @default(false)
+
+  // Relations
+  userId  String
+  user    User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  batchId String
+  batch   Batch  @relation(fields: [batchId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+
+  @@index([userId])
+  @@index([batchId])
+  @@map("test_sessions")
+}
