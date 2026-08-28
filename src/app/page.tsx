@@ -34,7 +34,7 @@ export default async function Home() {
       </main>
 
       <footer className="absolute bottom-6 text-sm text-slate-400">
-        &copy; {new Date().getFullYear()} CBT Platform. All rights reserved.
+        &copy; {new Date().getFullYear()} D'Space Web. All rights reserved.
       </footer>
     </div>
   );
